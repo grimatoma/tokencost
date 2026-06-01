@@ -2,7 +2,10 @@
 
 ```bash
 # ══ FIRST TIME ══
-git clone https://github.com/mr-beaver/tokencost && cd tokencost && bash onbording.sh
+cd ~ && git clone https://github.com/mr-beaver/tokencost && cd tokencost && bash onbording.sh
+
+# ══ ALREADY INSTALLED — restart/update from local folder ══
+cd ~/tokencost && bash onbording.sh
 
 # ══ EVERY TIME AFTER (restart / update) ══
 tokencost
