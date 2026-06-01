@@ -267,6 +267,11 @@ def calc_cost(model, input_tok, output_tok, cache_read=0, cache_creation=0):
     ) / 1_000_000
 
 
+def _naive_dt(s: str) -> datetime:
+    dt = datetime.fromisoformat(s)
+    return dt.replace(tzinfo=None) if dt.tzinfo else dt
+
+
 def _period_clause(period):
     if period == "today": return "AND date(ts, 'localtime') = date('now', 'localtime')"
     if period == "7d":    return "AND ts >= datetime('now', '-7 days')"
@@ -528,8 +533,8 @@ def get_sessions(period="7d", limit=50):
     for row in rows:
         ts = row[0]
         if current:
-            prev_dt = datetime.fromisoformat(current[-1][0])
-            curr_dt = datetime.fromisoformat(ts)
+            prev_dt = _naive_dt(current[-1][0])
+            curr_dt = _naive_dt(ts)
             if (curr_dt - prev_dt).total_seconds() > SESSION_GAP:
                 sessions.append(current)
                 current = []
@@ -539,8 +544,8 @@ def get_sessions(period="7d", limit=50):
 
     result = []
     for session in reversed(sessions[-limit:]):
-        start_dt = datetime.fromisoformat(session[0][0])
-        end_dt   = datetime.fromisoformat(session[-1][0])
+        start_dt = _naive_dt(session[0][0])
+        end_dt   = _naive_dt(session[-1][0])
         wall_ms  = int((end_dt - start_dt).total_seconds() * 1000)
         api_ms   = sum(r[3] or 0 for r in session)
         efficiency = round(api_ms / wall_ms * 100, 1) if wall_ms > 1000 else 100.0
@@ -811,7 +816,7 @@ def _pause_analysis(period):
     TTL_5M      =  5 * 60
     TTL_1H      = 60 * 60
 
-    timestamps = [datetime.fromisoformat(r[0]) for r in rows]
+    timestamps = [_naive_dt(r[0]) for r in rows]
     cw_all     = [r[1] or 0 for r in rows]
 
     within_gaps = []   # intra-session gap durations (seconds)
