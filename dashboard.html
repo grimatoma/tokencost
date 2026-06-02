@@ -340,10 +340,7 @@ tr.rl-highlight td{background:#fef9c3!important}
 </div>
 
 <header>
-  <div style="display:flex;flex-direction:column;gap:2px">
-    <div class="logo">TokenCost</div>
-    <div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.5px;font-weight:400">Reduce costs for Claude CLI</div>
-  </div>
+  <div class="logo">TokenCost</div>
   <div class="live-dot"></div>
   <div class="live-label">LIVE</div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
@@ -592,7 +589,7 @@ tr.rl-highlight td{background:#fef9c3!important}
       <div class="card-title">By Model — cost · cache · 1-shot rate</div>
       <div class="table-wrap"><table id="by-model-table">
         <thead><tr>
-          <th>Model</th><th>Cost</th><th>Cache</th><th>Calls</th><th>1-shot</th>
+          <th>Model</th><th>Cost</th><th>Cost/Call</th><th>Cache</th><th>Calls</th><th>1-shot</th>
         </tr></thead>
         <tbody id="by-model-tbody"></tbody>
       </table></div>
@@ -1667,15 +1664,17 @@ async function refresh() {
           const oneShotCell = x.one_shot_pct != null
             ? `<span style="color:${x.one_shot_pct>=70?'var(--good)':x.one_shot_pct>=40?'var(--accent2)':'var(--muted)'}">${x.one_shot_pct}%</span>`
             : '—';
+          const costPerCall = x.reqs > 0 && x.cost > 0 ? fmtCost(x.cost / x.reqs) : '—';
           return `<tr>
             <td style="font-family:var(--mono);font-size:12px">${shortName}</td>
             <td class="c-ok">${fmtCost(x.cost)}</td>
+            <td style="font-family:var(--mono);font-size:12px;color:var(--muted)">${costPerCall}</td>
             <td style="color:${cacheClr};font-family:var(--mono);font-size:12px">${x.cache_hit_rate != null ? x.cache_hit_rate + '%' : '—'}</td>
             <td class="c-muted">${fmt(x.reqs)}</td>
             <td>${oneShotCell}</td>
           </tr>`;
         }).join('')
-      : `<tr><td colspan="5" class="empty">No data</td></tr>`;
+      : `<tr><td colspan="6" class="empty">No data</td></tr>`;
   }
 
   // ── Tool breakdown split (Core Tools + MCP Servers)

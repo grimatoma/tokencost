@@ -579,12 +579,11 @@ def _record(source, model, input_tok, output_tok, cr, cw,
             effort="standard", prompt_preview="", msg_uuid=None, auto_thinking=False,
             optimizations_json=None, optimizer_savings_usd=0):
     cost = calc_cost(model, input_tok, output_tok, cr, cw)
-    if input_tok or output_tok or cr:
-        save_request(source, model, input_tok, output_tok, cr, cw,
-                     cost, duration_ms, status, ua, stop_reason, tool_count,
-                     json.dumps(tool_names) if tool_names else None, effort,
-                     prompt_preview, msg_uuid, auto_thinking, optimizations_json, optimizer_savings_usd)
-        print(f"  [{source}] {model} | in={input_tok} cr={cr} cw={cw} out={output_tok} | ${cost:.5f} | {duration_ms}ms")
+    save_request(source, model, input_tok, output_tok, cr, cw,
+                 cost, duration_ms, status, ua, stop_reason, tool_count,
+                 json.dumps(tool_names) if tool_names else None, effort,
+                 prompt_preview, msg_uuid, auto_thinking, optimizations_json, optimizer_savings_usd)
+    print(f"  [{source}] {model} | in={input_tok} cr={cr} cw={cw} out={output_tok} | ${cost:.5f} | {duration_ms}ms")
 
 
 # ── Lifespan ──────────────────────────────────────────────────────────────────
@@ -773,7 +772,10 @@ def projects(period: str = "7d"):
 
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard():
-    return open(_DASH).read()
+    return HTMLResponse(
+        content=open(_DASH).read(),
+        headers={"Cache-Control": "no-store, no-cache, must-revalidate"},
+    )
 
 
 @app.get("/img/{path:path}")

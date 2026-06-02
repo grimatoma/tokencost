@@ -293,6 +293,7 @@ action_start() {
   echo -e "${CYAN}  [3/8]${NC} Importing history from local logs..."
   if python3 "$SCRIPT_DIR/import_history.py" 2>/dev/null; then
     echo -e "  ${GREEN}✓${NC} ${DIM}History loaded into database${NC}"
+    echo -e "  ${DIM}  (sync daemon will auto-update every 5 min)${NC}"
   else
     echo -e "  ${YELLOW}⚠${NC} ${DIM}Could not import history (non-critical)${NC}"
   fi
@@ -305,6 +306,10 @@ action_start() {
   fi
   enable_sync_daemon
   echo -e "  ${GREEN}✓${NC} ${DIM}Daemon registered (every 5 min)${NC}"
+
+  echo -e "  ${DIM}  Triggering initial sync...${NC}"
+  python3 "$SCRIPT_DIR/import_history.py" --silent 2>/dev/null
+  echo -e "  ${GREEN}✓${NC} ${DIM}Initial sync complete${NC}"
 
   echo ""
   echo -e "${CYAN}  [5/8]${NC} Configuring Terminal (Claude CLI)..."
