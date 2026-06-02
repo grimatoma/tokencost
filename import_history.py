@@ -189,7 +189,10 @@ def _import_claude_jsonl(conn, patterns: list[str], source: str, cutoff: str | N
                     cache_write = usage.get("cache_creation_input_tokens", 0) or 0
                     cache_read  = usage.get("cache_read_input_tokens", 0) or 0
 
-                    if input_tok == 0 and output_tok == 0:
+                    if input_tok == 0 and output_tok == 0 and cache_read == 0 and cache_write == 0:
+                        continue
+
+                    if msg.get("model") == "<synthetic>":
                         continue
 
                     # Only record user_before on first encounter of this msg_id
@@ -214,12 +217,19 @@ def _import_claude_jsonl(conn, patterns: list[str], source: str, cutoff: str | N
                         b["name"] for b in content
                         if isinstance(b, dict) and b.get("type") == "tool_use" and b.get("name")
                     })
+                    # Accumulate tokens across streaming duplicates of the same msg_id.
+                    # JSONL may emit the same message twice: first with input tokens,
+                    # then with output tokens (or vice-versa). Keep the max of each field.
+                    prev = best.get(msg_id)
                     best[msg_id] = {
                         "ts": ts, "model": model,
-                        "input_tok": input_tok, "output_tok": output_tok,
-                        "cache_write": cache_write, "cache_read": cache_read,
-                        "stop_reason": msg.get("stop_reason", ""),
-                        "tools": tools, "tool_count": len(tools),
+                        "input_tok":   max(input_tok,   prev["input_tok"]   if prev else 0),
+                        "output_tok":  max(output_tok,  prev["output_tok"]  if prev else 0),
+                        "cache_write": max(cache_write, prev["cache_write"] if prev else 0),
+                        "cache_read":  max(cache_read,  prev["cache_read"]  if prev else 0),
+                        "stop_reason": msg.get("stop_reason", "") or (prev["stop_reason"] if prev else ""),
+                        "tools": tools or (prev["tools"] if prev else []),
+                        "tool_count": len(tools) or (prev["tool_count"] if prev else 0),
                         "msg_id": msg_id,
                     }
         except (OSError, PermissionError):
